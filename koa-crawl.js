@@ -10,6 +10,7 @@ const router = new Router()
 const proxy = ''// proxy-ip
 const main = async(ctx,next)=> {
   let  items = []
+  let str = ''
   await superagent.get('https://movie.douban.com/')
   .disableTLSCerts() // 使用代理的情况下证书验证会不通过
   .proxy(proxy)
@@ -18,7 +19,12 @@ const main = async(ctx,next)=> {
     $('.screening-bd .ui-slide-item').each((idx, ele) => {
       let $ele = $(ele)
       console.log('object', $ele.data('title'))
-      
+      str += `
+      title: ${$ele.data('title')}
+      region: ${$ele.data('region')}
+      actors: ${$ele.data('actors')}
+      rate: ${$ele.data('rate')}
+      `
       $ele.data('title') && items.push({
           title: $ele.data('title'),
           region: $ele.data('region'),
@@ -26,6 +32,9 @@ const main = async(ctx,next)=> {
           rate: $ele.data('rate'),
         })
       })
+    })
+  fs.writeFile('./douban.txt', str,(err)=> {
+      console.log('err', err)
     })
     ctx.body = items
     next()
