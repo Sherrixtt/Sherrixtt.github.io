@@ -1,0 +1,38 @@
+var fs = require('fs')
+var path = require('path');
+var yauzl = require("yauzl");
+const iconv = require('iconv-lite');
+// function checkCode(buf){
+//       if (buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
+//         // console.log('isBom', true)
+//         buf = buf.slice(3)
+//       }
+      
+//       return buf
+// }
+yauzl.open("license_UE_1023.zip", {lazyEntries: true,decodeStrings: false}, function(err, zipfile) {
+  if (err) throw err;
+  zipfile.readEntry();
+  zipfile.on("entry", function(entry) {
+    // let buf = checkCode(entry.fileName)
+    let buf = entry.fileName
+    let bufFileName = iconv.decode(buf,'GBK')
+    if (/\/$/.test(bufFileName)) {
+      if(!fs.existsSync(path.join(__dirname,bufFileName))){
+        fs.mkdirSync(path.join(__dirname,bufFileName));
+      }
+      zipfile.readEntry();
+    } else {
+      
+        zipfile.openReadStream(entry, function(err, readStream) {
+          if (err) throw err;
+          readStream.on("end", function() {
+            zipfile.readEntry();
+          });
+          readStream.pipe(fs.createWriteStream(path.join(__dirname,bufFileName)));
+      });
+    }
+  }).on("close",function(){
+    console.log("解压完成");
+  });
+});
